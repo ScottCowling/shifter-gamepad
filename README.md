@@ -18,22 +18,23 @@
 
 # Guide
 1. Preparing The Shifter
--- Remove the plastic cover by gripping or prying the plastic from the top of the shifter where the shifting legend is. It will unclip quite easily in most cases.
--- Remove the 6 pin connector off the end of the cable. Doing so without breaking it if you want to keep it for re-use on another project. Slide the plastic flex tube off the cabling if your shifter has one like the one in the example images. This will expose the 6 individual wires connecting the button and 2 switches. Cut the wires much shorter, leaving enough spare for maneuvering them to solder them to your microcontroller e.g. 10cm extra out of the bottom of the shifter if you would like room for retries if it goes wrong, then keep the spare wire for later projects if you wish to. You should end up with something like this.
+   - Remove the plastic cover by gripping or prying the plastic from the top of the shifter where the shifting legend is. It will unclip quite easily in most cases.
+   - Remove the 6 pin connector off the end of the cable. Doing so without breaking it if you want to keep it for re-use on another project. Slide the plastic flex tube off the cabling if your shifter has one like the one in the example images. This will expose the 6 individual wires connecting the button and 2 switches. Cut the wires much shorter, leaving enough spare for maneuvering them to solder them to your microcontroller e.g. 10cm extra out of the bottom of the shifter if you would like room for retries if it goes wrong, then keep the spare wire for later projects if you wish to. You should end up with something like this.
 ![Prepared Man TGX Shifter](/guide/prepared_shifter_man_tgx.jpg)
 
 2. Soldering
--- Once you've checked your microcontroller will fit comfortably inside the spare space in the shifter knob and your cables are cut to a length you're happy with, you can get started soldering the switches to digital pins and ground on the controller. Make sure you check your cables with a multimeter to check which cables control which switch if you're unsure to save extra difficulty later. Start by stripping back and pre-soldering the ends of each cable when you've test fitted them with the microcontroller and found a comfortable length, and the solder pads of your controller. Dont strip back too much or too little, or you will risk a short, or worse, snapping the connector off the solder pad when pressing it into the shifter with the plastic cover. (I definitely didn't break a controller this way... hehe. Oops!)
--- Solder the wires to the pads, taking care to fit them on angles that wont make them flex or get stuck and risk breaking when you push the controller deeper into the controller so you can close it.
+   - Once you've checked your microcontroller will fit comfortably inside the spare space in the shifter knob and your cables are cut to a length you're happy with, you can get started soldering the switches to digital pins and ground on the controller. Make sure you check your cables with a multimeter to check which cables control which switch if you're unsure to save extra difficulty later. Start by stripping back and pre-soldering the ends of each cable when you've test fitted them with the microcontroller and found a comfortable length, and the solder pads of your controller. Dont strip back too much or too little, or you will risk a short, or worse, snapping the connector off the solder pad when pressing it into the shifter with the plastic cover. (I definitely didn't break a controller this way... hehe. Oops!)
+   - Solder the wires to the pads, taking care to fit them on angles that wont make them flex or get stuck and risk breaking when you push the controller deeper into the controller so you can close it.
 ![Soldered Man TGX Shifter](/guide/soldered_shifter_man_tgx.jpg)
 
 3. Software
-TODO: Work in progress. Check back soon!.
+   - TODO: Work in progress. Check back soon!
 
 4. Mounting
-TODO: Work in progress. Check back soon!.
+   - TODO: Work in progress. Check back soon!
 
-5. All done. Enjoy!
+5. All done
+   - Enjoy!
 
 # Extra
  Do you have ideas on how to improve the project or have a sister project like this one based around custom simulator controls. Do let me know, I love hearing about what people are making, and think it'd be cool to create a list of links at the bottom here to other projects like this one.
