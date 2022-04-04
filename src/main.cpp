@@ -49,6 +49,7 @@ void dotstar_init() {
 
 #pragma endregion
 
+
 #pragma region Status LED Indicator
 //TODO: turn on led if any button pressed, off if not.
 void status_init() {
@@ -68,8 +69,8 @@ void status_wait_blink() {
 }
 #pragma endregion
 
-int buttonCount = 5;
-int buttonPins[5] = { 0, 1, 2, 3, 4 };
+int buttonCount = 3;
+byte buttonPins[5] = { 0, 1, 2, 3, 4 };
 bool buttonLastStates[5] = { false, false, false, false, false };
 
 unsigned long currentReportTime = 0;
