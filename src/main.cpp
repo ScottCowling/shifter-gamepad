@@ -3,9 +3,12 @@
 #include <HID-Project.h>
 #include <HID-Settings.h>
 
-#pragma region Firmware Options                       //Tweak firmware options before compiling such as enabling debug mode and changing report rate.
 
-#define TARGET_REPORT_RATE     125                    //Set the rate the device will report back to the USB host. Remove it to disable target report rate.
+
+///////////
+//OPTIONS//
+///////////
+#define TARGET_REPORT_RATE     125                    //Set the rate the device will report back to the USB host.
 
 #define DEBUG_MODE                                    //Enable debug logging via Serial.
 #define WAIT_FOR_DEBUG                                //Wait for a Serial connection before initializing.
@@ -17,23 +20,11 @@
 #define DOTSTAR_STATUS_LED_COUNT      1               //DotStar single led on Trinket M0.
 #define DOTSTAR_STATUS_LED_FORMAT     DOTSTAR_BRG     //DotStar colour format e.g. RGB, BRG, BGR.
 
-#pragma endregion
-
-#ifdef DEBUG_MODE
-#ifdef WAIT_FOR_DEBUG
-#pragma message "WARNING: BUILDING WITH DEBUG TOOLING ENABLED!"
-#endif
-#endif
-
-#pragma region Debug
 
 
-
-#pragma endregion
-
-
-#pragma region DotStar LED Indicator
-
+///////////
+//DOTSTAR//
+///////////
 #ifdef DOTSTAR_STATUS_LED_ENABLE
 int buttonColours[5] = { 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF };
 Adafruit_DotStar led(DOTSTAR_STATUS_LED_COUNT, DOTSTAR_STATUS_LED_DATA, DOTSTAR_STATUS_LED_CLK, DOTSTAR_STATUS_LED_FORMAT);
@@ -47,14 +38,13 @@ void dotstar_init() {
 #endif
 }
 
-#pragma endregion
 
 
-#pragma region Status LED Indicator
-//TODO: turn on led if any button pressed, off if not.
+//////////
+//STATUS//
+//////////
 void status_init() {
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
 }
 void status_on() {
   digitalWrite(LED_BUILTIN, HIGH);
@@ -67,36 +57,65 @@ void status_wait_blink() {
   delay(250);
   status_on();
 }
-#pragma endregion
 
-int buttonCount = 3;
-byte buttonPins[5] = { 0, 1, 2, 3, 4 };
-bool buttonLastStates[5] = { false, false, false, false, false };
 
-unsigned long currentReportTime = 0;
-unsigned long targetReportTime = 0;
-unsigned long reportCounter = 0;
 
-void setup() {
-  status_init();
+/////////
+//DEBUG//
+/////////
+#ifdef DEBUG_MODE
+#ifdef WAIT_FOR_DEBUG
+#pragma message "WARNING: BUILDING WITH DEBUG TOOLING ENABLED!"
+#endif
+#endif
 
+void debug_init() {
 #ifdef DEBUG_MODE
   Serial.begin(115200);
 #ifdef WAIT_FOR_DEBUG
   while (!Serial) { status_wait_blink(); }
 #endif
 #endif
+}
 
-  Gamepad.begin();
+
+
+///////////
+//GAMEPAD//
+///////////
+int buttonCount = 3;
+byte buttonPins[5] = { 0, 1, 2, 3, 4 };
+bool buttonLastStates[5] = { false, false, false, false, false };
+
+void gamepad_init() {
   for (int i = 0; i < buttonCount; i++) {
     pinMode(i, INPUT_PULLUP);
   }
+  Gamepad.begin();
+}
+
+
+/////////////
+//EXECUTION//
+/////////////
+unsigned long currentReportTime = 0;
+unsigned long targetReportTime = 0;
+unsigned long reportCounter = 0;
+
+void setup() {
+  status_init();
+  status_on();
+
+  debug_init();
+
+  gamepad_init();
 
   dotstar_init();
 
   targetReportTime = 1000 / TARGET_REPORT_RATE;
   
-  digitalWrite(LED_BUILTIN, LOW); //Signal end of boot process on DOTSTAR_STATUS_LED_BUILTIN
+  status_off(); //Signal boot completed by turning off light.
+  delay(250); //Delay to make finish visible before gamepad takes over and a switch may set LED solid.
 }
 
 void loop() {
@@ -105,12 +124,9 @@ void loop() {
   if (reportDelay > 0) {
     delay(reportDelay);
   } else {
-    //Serial.print("REPORT LAG: "); 
-    //Serial.print(reportDelay * -1); 
-    //Serial.println("ms longer than allocated!"); 
-    Serial.print("SLOW. ");
-    Serial.print(1000 / reportTimeDifference);
-    Serial.println("hz");
+    Serial.print("REPORTED ");
+    Serial.print(reportTimeDifference);
+    Serial.println("ms LATE!");
   }
   currentReportTime = millis();
   reportCounter++;
@@ -150,5 +166,6 @@ void loop() {
       buttonLastStates[i] = false;
     }
   }
+
   Gamepad.write(); //Write gamepad state.
 }
