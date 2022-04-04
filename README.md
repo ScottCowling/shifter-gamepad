@@ -38,3 +38,9 @@
 
 # Extra
  Do you have ideas on how to improve the project or have a sister project like this one based around custom simulator controls. Do let me know, I love hearing about what people are making, and think it'd be cool to create a list of links at the bottom here to other projects like this one.
+
+
+# ROADMAP
+- Inversion mapping for buttons, to invert their digitalRead state e.g. pin 1 HIGH = unpressed, LOW = pressed instead of LOW = unpressed, HIGH = pressed.
+- Button id mapping for mapping a pin number to a different "button" on the gamepad e.g. pin 4 presses button 1.
+- Button types (perhaps as part of a "button" class for ease of use). Push to toggle, toggle to push, maybe fancier stuff such as "blinking".
