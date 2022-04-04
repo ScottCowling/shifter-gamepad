@@ -3,14 +3,17 @@
 #include <HID-Project.h>
 #include <HID-Settings.h>
 
-////Enable debug logging via Serial.
+//Set the rate the device will report back to the USB host. 
+#define TARGET_REPORT_RATE 125
+
+//Enable debug logging via Serial.
 #define DEBUG_MODE
 
-////Wait for a Serial connection before initializing.
-//#define WAIT_FOR_DEBUG
+//Wait for a Serial connection before initializing.
+#define WAIT_FOR_DEBUG
 
-////Enables RGB led indicator for button presses.
-//#define LED_ENABLE
+//Enables RGB led indicator for button presses.
+#define LED_ENABLE
 
 #ifdef LED_ENABLE
 #define LED_BRIGHTNESS  255
@@ -23,16 +26,16 @@ Adafruit_DotStar led(LED_NUMPIXELS, LED_DATA_PIN, LED_CLK_PIN, DOTSTAR_BRG);
 
 #define SYS_LED_PIN LED_BUILTIN
 
-#define POLL_TARGET_RATE 125
+
 
 
 int buttonCount = 5;
-int buttonPins[5] = { 0, 1, 2, 3, 4 } ;
+int buttonPins[5] = { 0, 1, 2, 3, 4 };
 bool buttonLastStates[5] = { false, false, false, false, false };
 
-unsigned long pollStartTime = 0;
-unsigned long pollTargetTime = 0;
-unsigned long loops = 0;
+unsigned long currentReportTime = 0;
+unsigned long targetReportTime = 0;
+unsigned long reportCounter = 0;
 
 void setup() {
   pinMode(SYS_LED_PIN, OUTPUT); 
@@ -59,28 +62,37 @@ void setup() {
   led.show();
 #endif
 
-  pollTargetTime = 1000 / POLL_TARGET_RATE;
+  targetReportTime = 1000 / TARGET_REPORT_RATE;
   
   digitalWrite(SYS_LED_PIN, LOW); //Signal end of boot process on LED_BUILTIN
 }
 
 void loop() {
-  unsigned long split = millis() - pollStartTime;
-  int delayV =  pollTargetTime - split;
-  if (delayV > 0) { delay(delayV); }
-  pollStartTime = millis();
-  loops++;
+  unsigned long reportTimeDifference = millis() - currentReportTime;
+  int reportDelay = targetReportTime - reportTimeDifference;
+  if (reportDelay > 0) {
+    delay(reportDelay);
+  } else {
+    //Serial.print("REPORT LAG: "); 
+    //Serial.print(reportDelay * -1); 
+    //Serial.println("ms longer than allocated!"); 
+    Serial.print("SLOW REPORTING. ");
+    Serial.print(1000 / reportTimeDifference);
+    Serial.println("hz");
+  }
+  currentReportTime = millis();
+  reportCounter++;
 
-  if (loops % POLL_TARGET_RATE == 0) {
-    Serial.print("LOOPS ");
-    Serial.println(loops);
+  if (reportCounter % TARGET_REPORT_RATE == 0) {
+    Serial.print("RC ");
+    Serial.println(reportCounter / TARGET_REPORT_RATE);
   }
 
   for (int i = 0; i < buttonCount; i++) {
     if (!digitalRead(i)) {
 #ifdef DEBUG_MODE
       if (!buttonLastStates[i]) {
-        Serial.print("PRESSED ");
+        Serial.print("+");
         Serial.println(i);
       }
       buttonLastStates[i] = true;
@@ -94,11 +106,11 @@ void loop() {
     } else {
 #ifdef DEBUG_MODE
       if (buttonLastStates[i]) {
-        Serial.print("RELEASED ");
+        Serial.print("-");
         Serial.println(i);
       }
 #endif
-#if LED_ENABLE
+#ifdef LED_ENABLE
       led.clear();
       led.show();
 #endif
