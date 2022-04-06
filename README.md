@@ -45,3 +45,5 @@
 - Button id mapping for mapping a pin number to a different "button" on the gamepad e.g. pin 4 presses button 1.
 - Button types (perhaps as part of a "button" class for ease of use). Push to toggle, toggle to push, maybe fancier stuff such as "blinking".
 - Calculate and execute delays for timekeeping via micros instead of millis for higher accuracy. (If there is a benefit to doing so?).
+- Remove dependency on nicohood's HID library and write a dedicated gamepad class & HID. (Purely for personal learning if not for any optimisation reasons).
+- Set DotStar colour based on the report, not on the raw digitalread value so constant switches dont block
