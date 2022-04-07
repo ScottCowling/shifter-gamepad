@@ -4,187 +4,148 @@
 #include <HID-Settings.h>
 #include <hid.h>
 
-PluggableUSBModule
-
-
 #define FIRMWARE_NAME "shifter-gamepad"
 #define FIRMWARE_VERSION "v0.1.0 alpha"
 
+//TODO: Make DotStar an optional function via a preprocessor #def.
+//TODO: Track time to produce target report rate and if late when in debug mode.
+
+#define TARGET_REPORT_RATE            125     //Set the rate the device will report back to the USB host per second. Remove definition to disable (uncapped).
+
+#define BUTTON_COUNT                  5       //How many buttons do you have?
+
+#define DEBUG_ENABLE                          //Compile with debug code enabled (Serial printing of button presses and timings). This will likely reduce performance of reporting significantly.
+#define WAIT_FOR_SERIAL                       //Wait for Serial communication to begin before initializing the gamepad.
+#define SERIAL_BAUD                   115200  //Serial baud rate for debug serial.
+
+#define DOTSTAR_BRIGHTNESS 255                //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
+#define DOTSTAR_DATA       7                  //DotStar data pin.
+#define DOTSTAR_CLK        8                  //DotStar clock pin.
+#define DOTSTAR_COUNT      1                  //DotStar single led on Trinket M0.
+#define DOTSTAR_FORMAT     DOTSTAR_BRG        //DotStar colour format e.g. RGB, BRG, BGR.
 
 
-#define TARGET_REPORT_RATE            125             //Set the rate the device will report back to the USB host. Remove definition to disable (uncapped).
+uint32_t buttonStates = 0;
+byte inputPins[BUTTON_COUNT] = { 0, 1, 2, 3, 4 };                                               //Specify the digital pins your buttons will operate from.
+byte gamepadPinMap[BUTTON_COUNT] = { 1, 2, 3, 4, 5};                                            //Specify the gamepad "buttons" that will be triggered for each input pin e.g. pin 0 presses gamepad button 1.
+uint32_t gamepadColourMap[BUTTON_COUNT] = { 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF }; //Specify DotStar colours for each button press.
 
-#define DEBUG_MODE                                    //Enable debug logging via Serial.
-#define WAIT_FOR_SERIAL                               //Wait for a Serial connection before initializing.
-#define SERIAL_BAUD_RATE              115200          //Serial baud rate for debugging.
+Adafruit_DotStar star(DOTSTAR_COUNT, DOTSTAR_DATA, DOTSTAR_CLK, DOTSTAR_FORMAT);
 
-#define DOTSTAR_STATUS_LED                            //Enable RGB DotStar as an led indicator for button presses. Remove definition to disable.
-#define DOTSTAR_STATUS_LED_BRIGHTNESS 125             //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
-#define DOTSTAR_STATUS_LED_DATA       7               //DotStar data pin.
-#define DOTSTAR_STATUS_LED_CLK        8               //DotStar clock pin.
-#define DOTSTAR_STATUS_LED_COUNT      1               //DotStar single led on Trinket M0.
-#define DOTSTAR_STATUS_LED_FORMAT     DOTSTAR_BRG     //DotStar colour format e.g. RGB, BRG, BGR.
+#ifdef DEBUG_ENABLE 
+    #ifdef WAIT_FOR_SERIAL
+        #pragma message "COMPILING WITH 'WAIT_FOR_SERIAL' ENABLED. SERIAL MUST BE ESTABLISHED BEFORE THE GAMEPAD CONTROLLER WILL WORK."
+    #endif
 
+    #define BEGIN_DEBUG_MODE debug_mode();
+    #define DEBUG_PRESSED(btnIdx) Serial.print("PRESSED BUTTON "); Serial.print(gamepadPinMap[i]); Serial.print(" ON PIN "); Serial.println(inputPins[i]); //Serial.println(buttonStates, BIN);
+    #define DEBUG_RELEASED(btnIdx) Serial.print("RELEASED BUTTON "); Serial.print(gamepadPinMap[i]); Serial.print(" ON PIN "); Serial.println(inputPins[i]); //Serial.println(buttonStates, BIN);
 
-
-byte buttonCount = 5;
-byte buttonPins[5] = { 0, 1, 2, 3, 4 };
-bool buttonLastStates[5] = { false, false, false, false, false };
-
-#ifdef DOTSTAR_STATUS_LED
-  Adafruit_DotStar star(DOTSTAR_STATUS_LED_COUNT, DOTSTAR_STATUS_LED_DATA, DOTSTAR_STATUS_LED_CLK, DOTSTAR_STATUS_LED_FORMAT);
+    void debug_mode() {
+    Serial.begin(115200);
+        #ifdef WAIT_FOR_SERIAL 
+    while (!Serial) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(1); 
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(50); 
+    }
+    #endif
+    Serial.println("--DEBUG--");                
+    Serial.println(FIRMWARE_NAME);              
+    Serial.println(FIRMWARE_VERSION);           
+    Serial.print("target report rate: ");       
+    Serial.print(TARGET_REPORT_RATE);
+    Serial.println("hz");
+    Serial.print("buttons: ");
+    Serial.println(BUTTON_COUNT);
+    for (size_t i = 0; i < BUTTON_COUNT; i++)
+    {
+        Serial.print("INDEX ");
+        Serial.print(i);
+        Serial.print(" AT PIN ");
+        Serial.print(inputPins[i]);
+        Serial.print(" IS BUTTON ");
+        Serial.print(gamepadPinMap[i]);
+        Serial.print(" WITH DOTSTAR COLOR 0x");
+        uint32_t color = gamepadColourMap[i];
+        if (color < 16711680) {
+            Serial.print("00");
+        }
+        if (color < 65280) {
+            Serial.print("00");
+        }
+        Serial.print(color, HEX);
+        Serial.println(",");
+    }
+    Serial.println("----");
+}
+#else
+    #define BEGIN_DEBUG_MODE
+    #define DEBUG_PRESSED(btnIdx)
+    #define DEBUG_RELEASED(btnIdx)
 #endif
-
-
-
-///////////
-//PROGRAM//
-///////////
-#ifdef DEBUG_MODE
-  #ifdef WAIT_FOR_SERIAL
-    #pragma message "WARNING: BUILDING WITH DEBUG WAIT_FOR_SERIAL ENABLED!"
-  #endif
-#endif
-
-void dotstar_init() {
-  #ifdef DOTSTAR_STATUS_LED
-  star.begin();
-  star.setBrightness(DOTSTAR_STATUS_LED_BRIGHTNESS);
-  star.show();
-  #endif
-}
-
-void dotstar_update() {
-  #ifdef DOTSTAR_STATUS_LED
-  star.clear();
-  star.show();
-  #endif
-}
-
-
-
-//////////
-//TIMING//
-//////////
-unsigned long currentReportTime = 0;
-unsigned long targetReportTime = 0;
-unsigned long reportCounter = 0;
-
-void timing_init() {
-  targetReportTime = 1000 / TARGET_REPORT_RATE;
-}
-
-void timing_calculate() {
-  #ifdef TARGET_REPORT_RATE
-  unsigned long reportTimeDifference = millis() - currentReportTime;
-  int reportDelay = targetReportTime - reportTimeDifference;
-  if (reportDelay > 0) {
-    delay(reportDelay);
-  } else {
-    Serial.print("LATE ");
-    Serial.print(reportTimeDifference);
-    Serial.println("ms");
-  }
-  currentReportTime = millis();
-  reportCounter++;
-
-  if (reportCounter % TARGET_REPORT_RATE == 0) {
-    Serial.print("REPORTS ");
-    Serial.println(reportCounter);
-  }
-  #endif
-}
-
 
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);               //Set LED_BUILTIN to OUTPUT.
-  digitalWrite(LED_BUILTIN, HIGH);            //Signal start of boot process by turning on LED_BUILTIN.
+    pinMode(LED_BUILTIN, OUTPUT);
 
-  #ifdef DEBUG_MODE
-    Serial.begin(SERIAL_BAUD_RATE);           //Initialize Serial because DEBUG_MODE is enabled.
-  #ifdef WAIT_FOR_SERIAL
-    while (!Serial) {                         //Wait for Serial because WAIT_FOR_SERIAL is enabled. Blink LED_BUILTIN to show waiting for Serial.
-      digitalWrite(LED_BUILTIN, LOW);         
-      delay(350);
-      digitalWrite(LED_BUILTIN, HIGH);
-      delay(150);
+    star.begin();
+    star.setBrightness(DOTSTAR_BRIGHTNESS);
+    star.show();
+
+    for (size_t i = 0; i < BUTTON_COUNT; i++)
+    {
+        pinMode(inputPins[i], INPUT_PULLUP);
     }
-  #endif
-    Serial.println("--DEBUG INFO--");         //Print debug information block at the start of Serial initialization.
-    Serial.println(FIRMWARE_NAME);            //Firmware name.
-    Serial.println(FIRMWARE_VERSION);         //Firmware version.
-    Serial.print("target report rate: ");     //Firmware target report rate.       
-    #ifdef TARGET_REPORT_RATE
-      Serial.print(TARGET_REPORT_RATE);
-      Serial.println("hz");
-    #else
-      Serial.println("uncapped");
-    #endif
-    #ifdef DOTSTAR_STATUS_LED
-      Serial.println("dotstar: enabled");
-    #else
-      Serial.println("dotstar: disabled");
-    #endif
-    //TODO: print button config to serial in this startup block. e.g pin, btn number, inverted?, mode/type.
-  #endif
+    
+    Gamepad.begin();
 
-  timing_init();                              
-  
-  dotstar_init();                             //Initialize DotStar for indicating state.
-
-  for (int i = 0; i < buttonCount; i++) {     //Initialize gamepad button pins to INPUT_PULLUP.
-    pinMode(i, INPUT_PULLUP);
-  }
-  Gamepad.begin();                            //Initialize gamepad HID.
-  
-  digitalWrite(LED_BUILTIN, LOW);             //Signal end of boot process by turning off LED_BUILTIN.
+    BEGIN_DEBUG_MODE
 }
 
-bool updateButton(byte pin) {
-  if (!digitalRead(pin)) {  
-#ifdef DEBUG_MODE
-      if (!buttonLastStates[pin]) {
-        Serial.print("+");
-        Serial.println(pin);
-      }
-      buttonLastStates[pin] = true;
-#endif
-      Gamepad.press(pin + 1);
-#ifdef DOTSTAR_STATUS_LED
-      star.setPixelColor(0, star.ColorHSV((32565 / buttonCount) * pin));
-      star.show();
-#endif
-      return true;
-    } else {
-#ifdef DEBUG_MODE
-      if (buttonLastStates[pin]) {
-        Serial.print("-");
-        Serial.println(pin);
-      }
-#endif
-      buttonLastStates[pin] = false;
-      Gamepad.release(pin + 1);
-      return false;
-    }
-}
-
+unsigned long lastReport = 0;
+unsigned long nextReport = 0;
+unsigned long targetReportTime = (1000 / TARGET_REPORT_RATE) * 1000;
+unsigned long reportCounter = 0;
 void loop() {
-  timing_calculate();
-  bool anyButtonPressed = false;
-  //Iterate pins and update button states.
-  for (int i = 0; i < buttonCount; i++) {
-    if (updateButton(buttonPins[i])) {
-      anyButtonPressed = true;
+#ifdef TARGET_REPORT_RATE
+    unsigned long time = micros();
+    if (time > nextReport) {
+        Gamepad.write();
+        lastReport = time;
+        nextReport = lastReport + targetReportTime;
+        reportCounter++;
+        if (reportCounter % TARGET_REPORT_RATE == 0) {
+            reportCounter = 0;
+            digitalWrite(LED_BUILTIN, HIGH);
+        } else {
+            digitalWrite(LED_BUILTIN, LOW);
+        }
     }
-  }
+#else
+    Gamepad.write();
+#endif
 
-  //Set DotStar colour if any button is triggered.
-  dotstar_update();
-  
-  //Set LED_BUILTIN if any button is pressed.
-  digitalWrite(LED_BUILTIN, (anyButtonPressed) ? HIGH : LOW);
-
-  //Write gamepad state.
-  Gamepad.write();                                
+    for (size_t i = 0; i < BUTTON_COUNT; i++)
+    {
+        int pin = inputPins[i];
+        bool mstate = !bitRead(buttonStates, i);
+        bool state = digitalRead(pin);
+        if (state && !mstate) {
+            Gamepad.release(gamepadPinMap[i]);
+            bitClear(buttonStates, i);
+            DEBUG_RELEASED(i);
+        } else if (!state && mstate) {
+            Gamepad.press(gamepadPinMap[i]);
+            bitSet(buttonStates, i);
+            DEBUG_PRESSED(i);
+            star.fill(gamepadColourMap[i]);
+            star.show();
+        }
+    }
+    if (buttonStates == 0) {
+        star.clear();
+        star.show();
+    }
 }
