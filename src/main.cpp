@@ -10,26 +10,25 @@
 //TODO: Make DotStar an optional function via a preprocessor #def.
 //TODO: Track time to produce target report rate and if late when in debug mode.
 
-#define TARGET_REPORT_RATE            125     //Set the rate the device will report back to the USB host per second. Remove definition to disable (uncapped).
+#define TARGET_REPORT_RATE 125          //Set the rate the device will report back to the USB host per second. Remove definition to disable (uncapped).
 
-#define BUTTON_COUNT                  3       //How many buttons do you have?
+#define BUTTON_COUNT       5            //How many buttons do you have?
 
-#define DEBUG_ENABLE                          //Compile with debug code enabled (Serial printing of button presses and timings). This will likely reduce performance of reporting significantly.
-#define DEBUG_ENABLE_PIN              1       //Compile with debug code enabled that will only activate if the DEBUG_ENABLE_PIN is grounded. -------------------------------------------
-#define WAIT_FOR_SERIAL                       //Wait for Serial communication to begin before initializing the gamepad.
-#define SERIAL_BAUD                   115200  //Serial baud rate for debug serial.
+#define DEBUG_ENABLE                    //Compile with debug code enabled (Serial printing of button presses and timings). This will likely reduce performance of reporting significantly.
+#define WAIT_FOR_SERIAL                 //Wait for Serial communication to begin before initializing the gamepad.
+#define SERIAL_BAUD        115200       //Serial baud rate for debug serial.
 
-#define DOTSTAR_BRIGHTNESS 255                //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
-#define DOTSTAR_DATA       7                  //DotStar data pin.
-#define DOTSTAR_CLK        8                  //DotStar clock pin.
-#define DOTSTAR_COUNT      1                  //DotStar single led on Trinket M0.
-#define DOTSTAR_FORMAT     DOTSTAR_BRG        //DotStar colour format e.g. RGB, BRG, BGR.
+#define DOTSTAR_BRIGHTNESS 255          //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
+#define DOTSTAR_DATA       7            //DotStar data pin.
+#define DOTSTAR_CLK        8            //DotStar clock pin.
+#define DOTSTAR_COUNT      1            //DotStar single led on Trinket M0.
+#define DOTSTAR_FORMAT     DOTSTAR_BRG  //DotStar colour format e.g. RGB, BRG, BGR.
 
 
 uint32_t buttonStates = 0;
-byte inputPins[BUTTON_COUNT] = { 0, 2, 3  };                                //Specify the digital pins your buttons will operate from.
-byte gamepadPinMap[BUTTON_COUNT] = { 1, 2, 3 };                             //Specify the gamepad "buttons" that will be triggered for each input pin e.g. pin 0 presses gamepad button 1.
-uint32_t gamepadColourMap[BUTTON_COUNT] = { 0xFF0000, 0x00FF00, 0x0000FF }; //Specify DotStar colours for each button press.
+byte gamepadPinMap[BUTTON_COUNT] = { 0, 2, 3, 1, 4  };                                          //Specify the digital pins your buttons will operate from.
+byte gamepadButtonMap[BUTTON_COUNT] = { 1, 2, 3, 4, 5 };                                        //Specify the gamepad "buttons" that will be triggered for each input pin e.g. pin 0 presses gamepad button 1.
+uint32_t gamepadColourMap[BUTTON_COUNT] = { 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF }; //Specify DotStar colours for each button press.
 
 Adafruit_DotStar star(DOTSTAR_COUNT, DOTSTAR_DATA, DOTSTAR_CLK, DOTSTAR_FORMAT);
 
@@ -40,8 +39,8 @@ Adafruit_DotStar star(DOTSTAR_COUNT, DOTSTAR_DATA, DOTSTAR_CLK, DOTSTAR_FORMAT);
 
     bool isInDebugMode = false;
     #define BEGIN_DEBUG_MODE debug_mode();
-    #define DEBUG_PRESSED(btnIdx) Serial.print("PRESSED BUTTON "); Serial.print(gamepadPinMap[i]); Serial.print(" ON PIN "); Serial.println(inputPins[i]); //Serial.println(buttonStates, BIN);
-    #define DEBUG_RELEASED(btnIdx) Serial.print("RELEASED BUTTON "); Serial.print(gamepadPinMap[i]); Serial.print(" ON PIN "); Serial.println(inputPins[i]); //Serial.println(buttonStates, BIN);
+    #define DEBUG_PRESSED(btnIdx) Serial.print("PRESSED BUTTON '"); Serial.print(gamepadPinMap[i]); Serial.print("' ON PIN '"); Serial.print(gamepadPinMap[i]); Serial.println("'"); //Serial.println(buttonStates, BIN);
+    #define DEBUG_RELEASED(btnIdx) Serial.print("RELEASED BUTTON '"); Serial.print(gamepadPinMap[i]); Serial.print("' ON PIN '"); Serial.print(gamepadPinMap[i]); Serial.println("'"); //Serial.println(buttonStates, BIN);
 
     void debug_mode() {
         isInDebugMode = true;
@@ -67,9 +66,9 @@ Adafruit_DotStar star(DOTSTAR_COUNT, DOTSTAR_DATA, DOTSTAR_CLK, DOTSTAR_FORMAT);
             Serial.print("INDEX ");
             Serial.print(i);
             Serial.print(" AT PIN ");
-            Serial.print(inputPins[i]);
-            Serial.print(" IS BUTTON ");
             Serial.print(gamepadPinMap[i]);
+            Serial.print(" IS BUTTON ");
+            Serial.print(gamepadButtonMap[i]);
             Serial.print(" WITH DOTSTAR COLOR 0x");
             uint32_t color = gamepadColourMap[i];
             if (color < 16711680) {
@@ -99,18 +98,12 @@ void setup() {
 
     for (size_t i = 0; i < BUTTON_COUNT; i++)
     {
-        pinMode(inputPins[i], INPUT_PULLUP);
+        pinMode(gamepadPinMap[i], INPUT_PULLUP);
     }
     
     Gamepad.begin();
 
-#ifdef DEBUG_ENABLE
-    #ifndef DEBUG_ENABLE_PIN
-        BEGIN_DEBUG_MODE
-    #else
-        pinMode(DEBUG_ENABLE_PIN, INPUT_PULLUP);
-    #endif
-#endif
+    BEGIN_DEBUG_MODE
 }
 
 unsigned long lastReport = 0;
@@ -118,14 +111,6 @@ unsigned long nextReport = 0;
 unsigned long targetReportTime = (1000 / TARGET_REPORT_RATE) * 1000;
 unsigned long reportCounter = 0;
 void loop() {
-#ifdef DEBUG_ENABLE
-#ifdef DEBUG_ENABLE_PIN
-    if (digitalRead(DEBUG_ENABLE_PIN) == LOW && !isInDebugMode) {
-        BEGIN_DEBUG_MODE
-    }
-#endif
-#endif
-
 #ifdef TARGET_REPORT_RATE
     unsigned long time = micros();
     if (time > nextReport) {
@@ -146,17 +131,17 @@ void loop() {
 
     for (size_t i = 0; i < BUTTON_COUNT; i++)
     {
-        int pin = inputPins[i];
+        int pin = gamepadPinMap[i];
         bool mstate = bitRead(buttonStates, i);
         bool state = !digitalRead(pin);
         if (state && !mstate) {
-            Gamepad.press(gamepadPinMap[i]);
+            Gamepad.press(gamepadButtonMap[i]);
             bitSet(buttonStates, i);
             DEBUG_PRESSED(i);
             star.fill(gamepadColourMap[i]);
             star.show();
         } else if (!state && mstate) {
-            Gamepad.release(gamepadPinMap[i]);
+            Gamepad.release(gamepadButtonMap[i]);
             bitClear(buttonStates, i);
             DEBUG_RELEASED(i);  
         }
