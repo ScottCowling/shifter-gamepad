@@ -1,11 +1,11 @@
 # shifter-gamepad
- Convert a truck shifter (or other device) into a usb gamepad for games like Euro Truck Simulator 2.
+ Convert a truck shifter into a usb gamepad for games like Euro Truck Simulator 2 and American Truck Simulator.
 
 # Why?
- Simulation games revolve around realism and experience. Euro Truck Simulator 2 and American Truck Simulator are even more fun with manual shifting, and having the real shifter switches for split (L/H) and range (1-3 > 4-6 | 1-4 > 5-8) for shifting makes the experience more immersive and fun.
+ Simulation games revolve around realism and experience. Euro Truck Simulator 2 and American Truck Simulator are even more fun with manual shifting, and having a shifter with switches for H-shifting e.g. range and split, like on real manual trucks makes it much more immersive and interesting.
 
 # How?
- This project is using Arduino's HID library (and NicoHood's HID Project) alongisde an Arduino compatible microcontroller with Native USB support e.g. 32u4 or samd21 chip based controllers. For more details on controllers, see NicoHood's GitHub Repository and its excellent Wiki with lots of detail and examples on coding for this kind of project. https://github.com/NicoHood/HID
+ This project is using Arduino's HID library and NicoHood's HID Project alongisde an Arduino compatible microcontroller with Native USB support e.g. 32u4 or samd21 chip based controllers. This project was built with the Adafruit Trinket M0, a samd21 based controller. For more details on controllers, see NicoHood's GitHub Repository and its excellent Wiki with lots of detail and examples on coding for this kind of project. https://github.com/NicoHood/HID
 
 # Requirements
 - A microcontroller with Native USB supported by the NicoHood HID Project and Arduino HID. See the link to NicoHood's HID Project Wiki for more information about compatible devices. I used and recommend an Adafruit Trinket M0 for use in a truck shifter project like this one. Its very small but plenty fast, making it the perfect choice for a clean finished product. (Yours will look better than mine). If you use a larger controller, it will still work, but will have to be in a box outside the shifter, whereas I wanted mine to be concealed within the shifter itself.
