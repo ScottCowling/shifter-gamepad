@@ -1,24 +1,30 @@
 # shifter-gamepad
- Convert a truck shifter into a usb gamepad for games like Euro Truck Simulator 2 and American Truck Simulator.
+ This project is for converting a truck shifter into a usb gamepad for games like Euro Truck Simulator 2 and American Truck Simulator.
 
 # Why?
- Simulation games revolve around realism and experience. Euro Truck Simulator 2 and American Truck Simulator are even more fun with manual shifting, and having a shifter with switches for H-shifting e.g. range and split, like on real manual trucks makes it much more immersive and interesting.
+ Simulation games revolve around realism and experience. Having a shifter knob with the switches for H-shifting trucks on your shifter controller (e.g. Thrustmaster TH8A) in American Truck Simulator and Euro Truck Simulator 2 like on real manual trucks makes the experience even more immersive. In simulation, immersion and realism is king, so being able to use range, split, and perhaps a transmission brake in an authentic way via the shifter knob tickles the realism and immersion senses.
 
 # How?
- This project is using Arduino's HID library and NicoHood's HID Project alongisde an Arduino compatible microcontroller with Native USB support e.g. 32u4 or samd21 chip based controllers. This project was built with the Adafruit Trinket M0, a samd21 based controller. For more details on controllers, see NicoHood's GitHub Repository and its excellent Wiki with lots of detail and examples on coding for this kind of project. https://github.com/NicoHood/HID
+ This project is using Arduino's HID library and NicoHood's HID Project alongisde an Arduino compatible microcontroller with Native USB support e.g. 32u4 or samd21 chip based controllers. This project was built with the Adafruit Trinket M0, a samd21 based controller, which is what I will focus on. For more details on controllers, see NicoHood's GitHub Repository and its excellent Wiki with lots of detail and examples on coding for this kind of project. https://github.com/NicoHood/HID
 
 # Requirements
-- A microcontroller with Native USB supported by the NicoHood HID Project and Arduino HID. See the link to NicoHood's HID Project Wiki for more information about compatible devices. I used and recommend an Adafruit Trinket M0 for use in a truck shifter project like this one. Its very small but plenty fast, making it the perfect choice for a clean finished product. (Yours will look better than mine). If you use a larger controller, it will still work, but will have to be in a box outside the shifter, whereas I wanted mine to be concealed within the shifter itself.
+To use this project, you will need:
+
+- A supported microcontroller with Arduino support, and native USB compatibility. See NicoHood's HID Project Wiki for more information on compatible microcontrollers. A good choice is the Adafruit Trinket M0 that I will be using. Its fast, and extremely small for fitting inside the shifter, but you can always put a larger controller in a box outside the shifter if necessary, but nothing beats a clean look and convenient single cable approach.
+
 - A long USB cable compatible with your microcontrollers port.
+
 - A shifter to use as a controller. Searches for MAN TGX Shifter 6 pin will generally help you find cheap options like this: 
 ![Man TGX Shifter](/guide/example_shifter_man_tgx.jpg)
-- Soldering iron, soldering wire, wire cutters, basic electronics tooling e.g. multimeter.
+
+- Soldering tools e.g. wire or paste, iron, wire cutters, and a multimeter as a nice to have for debugging, especially if you are new to soldering.
 - Some patience and a willingness to fail and try again (especially for anyone new to soldering, like I am).
-- A 3d printer or a 3d printing service for creating a mount converter, as many truck shifter knobs are much larger threading than gamepad shifters like the Logitech G Shifter or Thrustmaster TH8A.
+
+- A 3d printer or 3d printing service for creating a mount converter because truck shifter knobs are larger diameter than gamepad shifter mounts. This isn't the only way to achieve this though, a drill and a bolt to hold it tight is another successful method I have seen, I just really didn't want to drill into a rounded metal object. The converter I used is this one, printed by a 3d printing service: https://www.thingiverse.com/thing:4827444
 
 # Guide
 1. Preparing The Shifter
-   - Remove the plastic cover by gripping or prying the plastic from the top of the shifter where the shifting legend is. It will unclip quite easily in most cases.
+   - Remove the plastic cover from the shifter. It will unclip quite easily in most cases.
    - Remove the 6 pin connector off the end of the cable. Doing so without breaking it if you want to keep it for re-use on another project. Slide the plastic flex tube off the cabling if your shifter has one like the one in the example images. This will expose the 6 individual wires connecting the button and 2 switches. Cut the wires much shorter, leaving enough spare for maneuvering them to solder them to your microcontroller e.g. 10cm extra out of the bottom of the shifter if you would like room for retries if it goes wrong, then keep the spare wire for later projects if you wish to. You should end up with something like this.
 ![Prepared Man TGX Shifter](/guide/prepared_shifter_man_tgx.jpg)
 
