@@ -10,7 +10,7 @@
 //TODO: Make DotStar an optional function via a preprocessor #def.
 //TODO: Track time to produce target report rate and if late when in debug mode.
 
-#define TARGET_REPORT_RATE 125          //Set the rate the device will report back to the USB host per second. Remove definition to disable (uncapped).
+#define TARGET_REPORT_RATE 1000          //Set the rate the device will report back to the USB host per second. Remove definition to disable (uncapped).
 
 #define BUTTON_COUNT       5            //How many buttons do you have?
 
@@ -24,7 +24,7 @@
 #define DOTSTAR_COUNT      1            //DotStar single led on Trinket M0.
 #define DOTSTAR_FORMAT     DOTSTAR_BRG  //DotStar colour format e.g. RGB, BRG, BGR.
 
-
+int pressedButtons = 0;
 uint32_t buttonStates = 0;
 byte gamepadPinMap[BUTTON_COUNT] = { 0, 2, 3, 1, 4  };                                          //Specify the digital pins your buttons will operate from.
 byte gamepadButtonMap[BUTTON_COUNT] = { 1, 2, 3, 4, 5 };                                        //Specify the gamepad "buttons" that will be triggered for each input pin e.g. pin 0 presses gamepad button 1.
@@ -137,17 +137,23 @@ void loop() {
         if (state && !mstate) {
             Gamepad.press(gamepadButtonMap[i]);
             bitSet(buttonStates, i);
+            pressedButtons++;
             DEBUG_PRESSED(i);
-            star.fill(gamepadColourMap[i]);
-            star.show();
         } else if (!state && mstate) {
             Gamepad.release(gamepadButtonMap[i]);
             bitClear(buttonStates, i);
+            pressedButtons--;
             DEBUG_RELEASED(i);  
         }
     }
-    if (buttonStates == 0) {
+    if (pressedButtons == 0) {
         star.clear();
+        star.show();
+    } else {
+        unsigned long duration = 1000 / pressedButtons; 
+        unsigned long zone = (millis() % 1000);
+        zone = (zone - (zone % duration)) / duration;
+        star.fill(gamepadColourMap[zone]);
         star.show();
     }
 }
