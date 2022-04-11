@@ -2,7 +2,8 @@
 #include <Adafruit_DotStar.h>
 #include <HID-Project.h>
 #include <HID-Settings.h>
-#include <hid.h>
+//#include <hid.h>
+#include <HID.h>
 
 #define FIRMWARE_NAME "shifter-gamepad"
 #define FIRMWARE_VERSION "v0.1.0 alpha"
