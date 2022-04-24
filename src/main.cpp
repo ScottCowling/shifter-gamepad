@@ -16,10 +16,10 @@
 #define BUTTON_COUNT       5            //How many buttons do you have?
 
 #define DEBUG_ENABLE                    //Compile with debug code enabled (Serial printing of button presses and timings). This will likely reduce performance of reporting significantly.
-#define WAIT_FOR_SERIAL                 //Wait for Serial communication to begin before initializing the gamepad.
+//#define WAIT_FOR_SERIAL                 //Wait for Serial communication to begin before initializing the gamepad.
 #define SERIAL_BAUD        115200       //Serial baud rate for debug serial.
 
-#define DOTSTAR_BRIGHTNESS 255          //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
+#define DOTSTAR_BRIGHTNESS 64           //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
 #define DOTSTAR_DATA       7            //DotStar data pin.
 #define DOTSTAR_CLK        8            //DotStar clock pin.
 #define DOTSTAR_COUNT      1            //DotStar single led on Trinket M0.
@@ -27,7 +27,7 @@
 
 int pressedButtons = 0;
 uint32_t buttonStates = 0;
-byte gamepadPinMap[BUTTON_COUNT] = { 0, 2, 3, 1, 4  };                                          //Specify the digital pins your buttons will operate from.
+byte gamepadPinMap[BUTTON_COUNT] = { 0, 1, 2, 3, 4  };                                          //Specify the digital pins your buttons will operate from.
 byte gamepadButtonMap[BUTTON_COUNT] = { 1, 2, 3, 4, 5 };                                        //Specify the gamepad "buttons" that will be triggered for each input pin e.g. pin 0 presses gamepad button 1.
 uint32_t gamepadColourMap[BUTTON_COUNT] = { 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF }; //Specify DotStar colours for each button press.
 
@@ -89,6 +89,18 @@ Adafruit_DotStar star(DOTSTAR_COUNT, DOTSTAR_DATA, DOTSTAR_CLK, DOTSTAR_FORMAT);
     #define DEBUG_RELEASED(btnIdx)
 #endif
 
+byte pressedButton(int zone) {
+    int current = 0;
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        if (bitRead(buttonStates, i)) {
+            current++;
+            if (current == zone) {
+                return i;
+            }
+        }
+    }
+    return 0;
+}
 
 void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -111,6 +123,7 @@ unsigned long lastReport = 0;
 unsigned long nextReport = 0;
 unsigned long targetReportTime = (1000 / TARGET_REPORT_RATE) * 1000;
 unsigned long reportCounter = 0;
+
 void loop() {
 #ifdef TARGET_REPORT_RATE
     unsigned long time = micros();
@@ -149,12 +162,11 @@ void loop() {
     }
     if (pressedButtons == 0) {
         star.clear();
-        star.show();
     } else {
         unsigned long duration = 1000 / pressedButtons; 
         unsigned long zone = (millis() % 1000);
         zone = (zone - (zone % duration)) / duration;
-        star.fill(gamepadColourMap[zone]);
-        star.show();
+        star.fill(gamepadColourMap[pressedButton(zone + 1)]);
     }
+    star.show();
 }
