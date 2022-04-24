@@ -2,7 +2,6 @@
 #include <Adafruit_DotStar.h>
 #include <HID-Project.h>
 #include <HID-Settings.h>
-//#include <hid.h>
 #include <HID.h>
 
 #define FIRMWARE_NAME "shifter-gamepad"
@@ -16,7 +15,7 @@
 #define BUTTON_COUNT       5            //How many buttons do you have?
 
 #define DEBUG_ENABLE                    //Compile with debug code enabled (Serial printing of button presses and timings). This will likely reduce performance of reporting significantly.
-//#define WAIT_FOR_SERIAL                 //Wait for Serial communication to begin before initializing the gamepad.
+//#define WAIT_FOR_SERIAL               //Wait for Serial communication to begin before initializing the gamepad.
 #define SERIAL_BAUD        115200       //Serial baud rate for debug serial.
 
 #define DOTSTAR_BRIGHTNESS 64           //DotStar brightness (0-255). Lower brightness is better for long durations to increase time-to-failure.
